@@ -1,0 +1,173 @@
+(You should start with the ".Rmd" file that produced what you're reading: [hw4.Rmd](hw4.Rmd). But this HTML version is easier to read.)
+
+# STAT 327 Homework 4
+We'll grade your homework by
+
+* opening your "hw4.Rmd" file in RStudio in a directory (folder) containing the data file(s)
+* clicking "Knit HTML"
+* reading the HTML output
+* reading your "hw4.Rmd"
+
+You should write R code anywhere you see an empty R code chunk. You should write English text (surrounded by doubled asterisks, `**...**`, to get **boldface type**) anywhere you see "...".
+
+The HTML version of these instructions is easier to read than this plain text ".Rmd" file because the math notation is rendered nicely. So start by clicking "Knit HTML". (Then read this ".Rmd" file, and you'll see that it's not hard to make nice mathematical notation in R Markdown.)
+
+Include reasonable titles and labels with each of your graphs.
+
+Name: Sirui
+
+Email: syi26@wisc.edu
+
+## Part 1: Statistical tests and confidence intervals
+
+### Difference of two means
+Regarding the "mtcars" data frame, let's investigate whether engine horsepower influences gas mileage. (For the sake of this exercise, suppose that the assumptions of the difference-of-two-means test are met. In fact, they probably are not met.)
+
+### Make one graph consisting of three rows and one column, using the same $x$-limits, c(0, 40), and the same $y$-limits, c(0, 0.15), each time.
+
+* On top, make a density plot with rug of mpg.
+* In the middle,
+    + make a density plot with rug of mpg for those cars with lower-than-median horsepower
+    + add a solid red circle, twice as large as the default size, at the location of the mean of these data
+    + add a label "$\bar{x}=0$" (replacing "0" with the correct value) just above the red circle (hint: see ?plotmath for the bar on $x$, ?text to create a graph label, and this [hint on labels](label.html))
+* At the bottom,
+    + make a density plot with rug of mpg for those cars with higher-than-or-equal-to-median horsepower
+    + add a solid red circle, twice as large as the default size, at the location of the mean of these data
+    + add a label "$\bar{x}=0$" (replacing "0" with the correct value) ([hint on labels](label.html))
+```{r}
+layout(matrix(c(1,2,3), nrow = 3, ncol = 1))
+plot(density(mtcars$mpg), xlim = c(0, 40), ylim = c(0, 0.15), main = paste0("Density plot for mpg"))
+rug(mtcars$mpg)
+
+plot(density(mtcars$mpg[mtcars$hp < median(mtcars$hp)]), xlim = c(0, 40), ylim = c(0, 0.15), main = paste0("Density plot for mpg for those cars with lower-than-median horsepower"))
+rug(mtcars$mpg[mtcars$hp < median(mtcars$hp)])
+points(mean(mtcars$mpg[mtcars$hp < median(mtcars$hp)]), 0, cex = 2, pch = 19, col = "red")
+text(mean(mtcars$mpg[mtcars$hp < median(mtcars$hp)]), 0.03, bquote(bar(x) * "=" * .(mean(mtcars$mpg[mtcars$hp < median(mtcars$hp)]))))
+
+plot(density(mtcars$mpg[mtcars$hp >= median(mtcars$hp)]), xlim = c(0, 40), ylim = c(0, 0.15), main = paste0("Density plot for mpg for those cars with higher-than-or-equal-to-median horsepower"))
+rug(mtcars$mpg[mtcars$hp >= median(mtcars$hp)])
+points(mean(mtcars$mpg[mtcars$hp >= mtcars$hp]), 0, cex = 2, pch = 19, col = "red")
+text(mean(mtcars$mpg[mtcars$hp >= mtcars$hp]), 0.03, bquote(bar(x) * "=" * .(mean(mtcars$mpg[mtcars$hp >= median(mtcars$hp)]))))
+```
+
+### Judging only from the graph of the two samples, describe at least two differences in the corresponding populations.
+
+**Cars that have lower-than-median horsepower tend to have higher mpg while those have higher-than-or-equal-to-median horsepower tend to have lower mpg.**
+**Cars that have lower-than-median horsepower tend to have a larger and more scattering range of mpg while those have higher-than-or-equal-to-median horsepower tend to have a smaller and more concentrated range of mpg.**
+
+### Find the P-value for testing $H_0: \mu_{\text{mpg for low-power cars}} - \mu_{\text{mpg for high-power cars}} = 0$ against the alternative $H_1: \mu_{\text{mpg for low-power cars}} - \mu_{\text{mpg for high-power cars}} > 0$.
+```{r}
+t.test(mtcars$mpg[mtcars$hp < median(mtcars$hp)], mtcars$mpg[mtcars$hp >= median(mtcars$hp)], alternative = "greater")$p.value
+```
+
+What conclusion do you draw?
+**Because the p-value is very small, so we should reject the null hypothesis that the mean mpg for lower-power cars is not different from the mean mpg for higher-power cars. So the conclusion is that the mean mpg for lower.**
+
+## Part 2: Regression models for the price of beef
+
+### Read the data
+
+* Read [beef.txt](beef.txt) into a data frame. (Hint: it requires one line--see ?read.table. You may read it from a file saved in the same directory as your script, or you may read it directly from the class website.)
+* Display the data frame's structure
+* Display the data frame's summary
+```{r}
+beef <- read.table("beef.txt", header = TRUE, comment.char = "%")
+str(beef)
+summary(beef)
+```
+
+### A first step after reading a data set into an R data frame is to check whether the categorical variables are encoded as factors. Does the beef data set have any categorical variables that should be encoded as factors?
+The beef data set does not have any categorical variables.
+
+### Multiple regression
+* Make a multiple linear regression model for PBE (price of beef) depending on the other variables (including YEAR).
+* Display the model summary.
+* Make a residual plot of residuals vs. fitted values (both of which are in your model--you don't need to do calculations):
+    + Plot points of the form $(\hat{y}_i, e_i)$
+    + Include the title, "Beef: residual plot"
+    + Include the $y$-axis label $e_i$ (hint: search ?plotmath for how to get the subscripted $i$)
+    + Include the $x$-axis label $\hat{y}_i$ (search ?plotmath for how to get the hat on the $y$)
+* Make a single plot consisting of nine residual plots in a 3x3 arrangement. Each of these nine should have points of the form $(x_{ji}, e_i)$, where $x_{ji}$ is the $i^{\text{th}}$ observation of the $j^{\text{th}}$ independent variable. All variables other than PBE are independent variables here. None of these plots requires a main title, but each should have a $y$-axis label "$e_i$" and an $x$-axis label consisting of the independent variable's name.
+```{r}
+m <- lm(beef$PBE ~ beef$YEAR + beef$CBE + beef$PPO + beef$CPO + beef$PFO + beef$DINC + beef$CFO + beef$RDINC + beef$RFP)
+summary(m)
+plot(m$fitted.values, m$residuals, main = paste0("Beef: residual plot"), ylab = expression(e[i]), xlab = expression(hat(y[i])))
+layout(matrix(c(1,2,3,4,5,6,7,8,9), nrow = 3, ncol = 3))
+plot(beef$YEAR, m$residuals, ylab = expression(e[i]), xlab = "YEAR")
+plot(beef$CBE, m$residuals, ylab = expression(e[i]), xlab = "CBE")
+plot(beef$PPO, m$residuals, ylab = expression(e[i]), xlab = "PPO")
+plot(beef$CPO, m$residuals, ylab = expression(e[i]), xlab = "CPO")
+plot(beef$PFO, m$residuals, ylab = expression(e[i]), xlab = "PFO")
+plot(beef$DINC, m$residuals, ylab = expression(e[i]), xlab = "DINC")
+plot(beef$CFO, m$residuals, ylab = expression(e[i]), xlab = "CFO")
+plot(beef$RDINC, m$residuals, ylab = expression(e[i]), xlab = "RDINC")
+plot(beef$RFP, m$residuals, ylab = expression(e[i]), xlab = "RFP")
+```
+
+### Simple linear regression
+* Look at your model summary to find the x variable whose model coefficient is most significantly different from 0. (You don't have to write R code to find this other variable--just read your model summary.)
+* Make a simple linear regression model for PBE vs. this x.
+* Make a scatterplot of PBE vs. this x.
+    + Add the simple regression line to your scatterplot.
+    + Include a reasonable title and axis labels.
+```{r}
+# The x variable whose model coefficient is most significantly different from 0 is DINC.
+simple_m <- lm(beef$PBE ~ beef$DINC)
+plot(beef$DINC, beef$PBE, main = paste0("PBE vs. DINC"), xlab = "DINC", ylab = "PBE")
+abline(simple_m, col = "red", lwd = 3)
+legend("topright", col = "red", lwd = 3, cex = 0.8, legend = "linear regression line")
+```
+
+### Are the coefficients (y-intercept and slope in the x direction) the same for this second simple linear regression model as they are in the first multiple regression model?
+**The intercepts and coefficients are not the same. For the multiple linear regression line, the intercept is 2693.0135 and the slope of DINC is -2.4979. For the simple linear regression line, the intercept is 93.0721 and the slope of DINC is -0.5381.**
+
+## Part 3: Regression model including confidence bands
+
+### Create a simulated bivariate data set consisting of n=100 $(x_i, y_i)$ pairs:
+* Generate n random $x$-coordinates $x_i$ from $N(0, 1)$.
+* Generate n random errors, $\epsilon_i$, from $N(0, \sigma)$, using $\sigma = 4$.
+* Set $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$, where $\beta_0 = 2$, $\beta_1 = 3$, and $\epsilon_i \sim N(0, 4)$. (That is, $y$ is a linear function of $x$, plus some random noise.)
+
+(Now we have simulated data. We'll pretend that we don't know
+the true y-intercept $\beta_0 = 2$, the true slope $\beta_1 = 3$, the true $\sigma=4$, or the true errors $\epsilon_i$. All we know are the data, $(x_i, y_i)$. We'll let linear regression estimate the coefficients.)
+
+### Make a graph of the data and model:
+* Make a scatterplot of the data, $(x_i, y_i)$.
+* Estimate a linear regression model of the form $\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 x_i$.
+* Display a summary of the model; check that the estimated coefficients are near the true $\beta_0 = 2$ and $\beta_1 = 3$.
+* Add a solid black estimated regression line to the plot.
+* Add a dashed red true line (y = 2 + 3x) to the plot.
+* Add dotted blue 95% pointwise confidence bands that consist, for each prediction $(x_i, \hat{y}_i)$, of a vertical confidence interval around $\hat{y}_i$ centered at $(x_i, \hat{y}_i)$; the formula is $\hat{y}_i \pm t_{n-2, \alpha/2} s_{\hat{y}_i}$, where
+    + $\hat{y}_i$ is the predicted $y$ at $x = x_i$ (this is available in the model you calculated)
+    + $e_i = y_i - \hat{y}_i$, the $i^{\text{th}}$ residual (this estimate of $\epsilon_i$ is available in the model you calculated)
+    + $s = \sqrt{\frac{\sum_{i=1}^n e_i^2}{n - 2}}$ (this is an estimate of $\sigma$)
+    + $s_{\hat{y}_i} = s \sqrt{\frac{1}{n} + \frac{(x_i - \bar{x})^2}{\sum_{i=1}^n (x_i - \bar{x})^2}}$
+    + $t_{n-2, \alpha/2}$ is the number that cuts off a right-tail area .025 from a Student's $t$ distribution with $n-2$ degrees of freedom
+* Add a legend identifying each of the black, red, and blue lines.
+
+Hint: These calculations might look hard, but they go quickly with R. See Quiz 2's questions 8-11 for examples of efficiently translating sums into R code.
+```{r}
+n = 100
+sigma = 4
+beta0 = 2
+beta1 = 3
+x = sort(rnorm(n))
+epsi = rnorm(100, 0, 4)
+y = beta0 + beta1 * x + epsi
+plot(x, y, main = paste0("y ~ x"), xlab = "x", ylab = "y")
+model3 = lm(y~x)
+model3
+summary(model3)
+abline(model3)
+curve(2 + 3*x , col = "red", lty = "dashed", add = TRUE)
+
+yhat = model3$fitted.values
+e = y - yhat
+s = sqrt(sum(e^2) / (n - 2))
+syhat = s * sqrt(1/n + (x - mean(x))^2/(sum((x - mean(x))^2))) 
+lower = yhat - syhat * qt(0.975, length(x) - 2)
+higher = yhat + syhat * qt(0.975, length(x) - 2)
+lines(x, lower, lty = "dotted", col = "blue")
+lines(x, higher, lty = "dotted", col = "blue")
+legend("topleft", legend = c("95% Confidence Interval","y = 2 + 3x","Regression Line"), col = c("blue", "red", "black"), lty = c("dotted","dashed","solid"))
+```
